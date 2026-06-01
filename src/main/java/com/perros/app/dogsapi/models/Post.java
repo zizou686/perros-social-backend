@@ -33,11 +33,11 @@ public class Post {
     private User user;
 
     @OneToMany(mappedBy = "post", cascade = CascadeType.ALL, orphanRemoval = true)
-    @JsonIgnore  // ← Evita recursión infinita
+    @JsonIgnore
     private Set<Comment> comments = new HashSet<>();
 
     @OneToMany(mappedBy = "post", cascade = CascadeType.ALL, orphanRemoval = true)
-    @JsonIgnore  // ← Evita recursión infinita
+    @JsonIgnore
     private Set<Like> likes = new HashSet<>();
 
     @PrePersist

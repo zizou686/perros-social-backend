@@ -98,40 +98,42 @@ public class PostController {
         Post savedPost = postRepository.save(post);
         return convertToDTO(savedPost);
     }
-@DeleteMapping("/{id}")
-@PreAuthorize("isAuthenticated()")
-public ResponseEntity<?> deletePost(@PathVariable Long id) {
-    Post post = postRepository.findById(id)
-        .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Publicación no encontrada"));
 
-    UserDetailsImpl userDetails = (UserDetailsImpl) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-    User currentUser = userRepository.findById(userDetails.getId())
-        .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
+    @DeleteMapping("/{id}")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<?> deletePost(@PathVariable Long id) {
+        Post post = postRepository.findById(id)
+            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Publicación no encontrada"));
 
-    boolean isOwner = post.getUser().getId().equals(currentUser.getId());
-    boolean isAdmin = currentUser.getRoles().stream()
-        .anyMatch(role -> role.getName().name().equals("ROLE_ADMIN"));
+        UserDetailsImpl userDetails = (UserDetailsImpl) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        User currentUser = userRepository.findById(userDetails.getId())
+            .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
 
-    if (!isOwner && !isAdmin) {
-        Map<String, String> error = new HashMap<>();
-        error.put("error", "No tienes permiso para eliminar esta publicación");
-        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(error);
-    }
+        boolean isOwner = post.getUser().getId().equals(currentUser.getId());
+        boolean isAdmin = currentUser.getRoles().stream()
+            .anyMatch(role -> role.getName().name().equals("ROLE_ADMIN"));
 
-    // ✅ IMPORTANTE: Primero eliminar comentarios y likes
-    try {
-        commentRepository.deleteByPostId(id);
-        likeRepository.deleteByPostId(id);
-        
-        // Luego eliminar la publicación
-        postRepository.deleteById(id);
-        
-        Map<String, String> response = new HashMap<>();
-        response.put("message", "Publicación eliminada correctamente");
-        return ResponseEntity.ok(response);
-    } catch (Exception e) {
-        Map<String, String> error = new HashMap<>();
-        error.put("error", "Error al eliminar: " + e.getMessage());
-        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);
+        if (!isOwner && !isAdmin) {
+            Map<String, String> error = new HashMap<>();
+            error.put("error", "No tienes permiso para eliminar esta publicación");
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(error);
+        }
+
+        try {
+            // Primero eliminar comentarios y likes
+            commentRepository.deleteByPostId(id);
+            likeRepository.deleteByPostId(id);
+            
+            // Luego eliminar la publicación
+            postRepository.deleteById(id);
+            
+            Map<String, String> response = new HashMap<>();
+            response.put("message", "Publicación eliminada correctamente");
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            Map<String, String> error = new HashMap<>();
+            error.put("error", "Error al eliminar: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);
+        }
     }
 }

@@ -19,18 +19,21 @@ public class Like {
 
     @ManyToOne
     @JoinColumn(name = "post_id")
-    @JsonIgnore  // ← Evita recursión infinita
+    @JsonIgnore
     private Post post;
 
-    // Constructores
+    // ✅ Nuevo campo: guarda el emoji de la reacción (❤️, 😂, 😍, etc.)
+    @Column(name = "reaction_type", length = 10)
+    private String reactionType;
+
     public Like() {}
 
-    public Like(User user, Post post) {
+    public Like(User user, Post post, String reactionType) {
         this.user = user;
         this.post = post;
+        this.reactionType = reactionType;
     }
 
-    // Getters y Setters
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
 
@@ -39,4 +42,7 @@ public class Like {
 
     public Post getPost() { return post; }
     public void setPost(Post post) { this.post = post; }
+
+    public String getReactionType() { return reactionType; }
+    public void setReactionType(String reactionType) { this.reactionType = reactionType; }
 }
